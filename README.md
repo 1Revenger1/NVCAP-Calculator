@@ -28,7 +28,7 @@ There exists other fields which can be edited within the NVCAP value as well:
   * 0E: 300 series+ MacBook Air/Low end
   * 0F: 300 series+ MacBook Pro/iMac/High End
 
-![](/images/8800m-example.png)
+![](/images/8800m-example.png)  
 Example from an 8800M GTX
 
 Once the values are set as you want, select `c` and it will dump the NVCAP value.
