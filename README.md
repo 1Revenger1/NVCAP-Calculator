@@ -4,8 +4,7 @@ This is a simple script which reads an Nvidia GPU VBIOS and calculates a vBIOS f
 
 This is compatible with GTX 4xx series GPUs and older, and works with both laptop and desktop GPUs.
 
-To use this program, you need node.js. To run, you'll want to clone this project, run `npm install`, then `npm run run` OR `node index.js`.  
-Building is not required, but this can be built using typescript. `tsc` will automatically generate `index.js`, but `npm run build` will compile and run in one command if preferred.
+To use this program, you need node.js. To run, you'll want to clone this project, run `npm install`, then `npm run run` OR `node index.js`. Building is not required, but this can be built using typescript. `tsc` will automatically generate `index.js`, but `npm run build` will compile and run in one command if preferred.
 
 Once running, give it a VBIOS file, and then select `3` once it dumps you to the main menu again. From there, you need to assign each DCB Entry (at the top) to a head.
 When parsing the VBIOS file, this can automatically put some entries into different heads in the following situations:
@@ -25,6 +24,8 @@ There exists other fields which can be edited within the NVCAP value as well:
   * 0B: Laptop-class GPU
   * 0E: 300 series+ MacBook Air/Low end
   * 0F: 300 series+ MacBook Pro/iMac/High End
+
+Once the values are set as you want, select `c` and it will dump the NVCAP value.
 
 ## Credits
 * Khronokernel - For answering way to many questions about old graphics cards and macs
