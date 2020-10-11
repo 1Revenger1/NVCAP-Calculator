@@ -175,6 +175,8 @@ function readRom() {
         // Skip entry
         if (dcbHead.type == 0xf)
             continue;
+        if (dcbHead.type == ConnectorType.LVDS)
+            nvcap.isMobile = true;
         parsedEntries.push(dcbHead);
         // EOL (End of Line) - start parsing entries
         if (dcbHead.type == 0xE)
