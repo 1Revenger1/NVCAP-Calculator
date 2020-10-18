@@ -304,9 +304,9 @@ function chooseROM() {
                     if (!true) return [3 /*break*/, 5];
                     console.clear();
                     header();
-                    console.log("Enter in the location of your DSDT.aml\n");
-                    console.log(chalk_1.default.cyan("Windows Tip: ") + " Shift + Right click your DSDT.aml and click \"Copy Path\"");
-                    console.log(chalk_1.default.cyan("Linooox/macOS: ") + " Drag and drop your DSDT.aml into this prompt\n");
+                    console.log("Enter in the location of your VBIOS\n");
+                    console.log(chalk_1.default.cyan("Windows Tip: ") + " Shift + Right click your VBIOS and click \"Copy Path\"");
+                    console.log(chalk_1.default.cyan("Linooox/macOS: ") + " Drag and drop your VBIOS into this prompt\n");
                     return [4 /*yield*/, prompt("New ROM Location (q to go to the menu)")];
                 case 1:
                     res = _a.sent();
