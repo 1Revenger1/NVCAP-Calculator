@@ -332,7 +332,7 @@ async function chooseROM() {
         
         let res = await prompt("New ROM Location (q to go to the menu)");
         console.log(res);
-        res = res.replace(/[\n\r"]/g, "");
+        res = res.replace(/[\n\r"]/g, "").trim();
         if (res == "q") return;
         if (existsSync(res)) {
             romFile = res;

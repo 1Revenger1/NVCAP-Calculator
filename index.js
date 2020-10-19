@@ -311,7 +311,7 @@ function chooseROM() {
                 case 1:
                     res = _a.sent();
                     console.log(res);
-                    res = res.replace(/[\n\r"]/g, "");
+                    res = res.replace(/[\n\r"]/g, "").trim();
                     if (res == "q")
                         return [2 /*return*/];
                     if (!fs_1.existsSync(res)) return [3 /*break*/, 2];
