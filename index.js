@@ -42,7 +42,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 var chalk_1 = __importDefault(require("chalk"));
 var fs_1 = require("fs");
 // Based off of https://github.com/torvalds/linux/blob/master/drivers/gpu/drm/nouveau/nouveau_bios.c
-var romFile = "000.rom";
+var romFile = "9600MGT.rom";
 function prompt(question) {
     return __awaiter(this, void 0, void 0, function () {
         var stdin, stdout;
@@ -177,10 +177,10 @@ function readRom() {
             continue;
         if (dcbHead.type == ConnectorType.LVDS)
             nvcap.isMobile = true;
-        parsedEntries.push(dcbHead);
         // EOL (End of Line) - start parsing entries
         if (dcbHead.type == 0xE)
             break;
+        parsedEntries.push(dcbHead);
     }
     console.log();
     console.log("Found " + parsedEntries.length + " populated DCB Entries");
@@ -310,8 +310,8 @@ function chooseROM() {
                     return [4 /*yield*/, prompt("New ROM Location (q to go to the menu)")];
                 case 1:
                     res = _a.sent();
-                    console.log(res);
                     res = res.replace(/[\n\r"]/g, "").trim();
+                    console.log("Parsed Path: " + res);
                     if (res == "q")
                         return [2 /*return*/];
                     if (!fs_1.existsSync(res)) return [3 /*break*/, 2];
@@ -592,13 +592,16 @@ function main() {
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0:
-                    // Init ROM info if it exists
-                    if (fs_1.existsSync(romFile)) {
-                        readRom();
-                    }
-                    _a.label = 1;
+                    if (!!fs_1.existsSync(romFile)) return [3 /*break*/, 2];
+                    return [4 /*yield*/, chooseROM()];
                 case 1:
-                    if (!true) return [3 /*break*/, 9];
+                    _a.sent();
+                    _a.label = 2;
+                case 2:
+                    readRom();
+                    _a.label = 3;
+                case 3:
+                    if (!true) return [3 /*break*/, 11];
                     romExists = fs_1.existsSync(romFile);
                     console.clear();
                     header();
@@ -615,31 +618,31 @@ function main() {
                         output += "Current ROM file (not found): " + chalk_1.default.red(romFile);
                     }
                     console.log(output);
-                    return [4 /*yield*/, prompt("Type in the number to select your option, or \"q\"/\"quit\" to quit: ")];
-                case 2:
+                    return [4 /*yield*/, prompt("Type in the number to select your option, or \"q\"/\"quit\" to quit")];
+                case 4:
                     result = _a.sent();
                     if (result.toLowerCase().startsWith("q"))
-                        return [3 /*break*/, 9];
-                    if (!result.toLowerCase().startsWith("1")) return [3 /*break*/, 4];
+                        return [3 /*break*/, 11];
+                    if (!result.toLowerCase().startsWith("1")) return [3 /*break*/, 6];
                     return [4 /*yield*/, chooseROM()];
-                case 3:
-                    _a.sent();
-                    _a.label = 4;
-                case 4:
-                    if (!romExists) return [3 /*break*/, 8];
-                    if (!result.toLowerCase().startsWith("2")) return [3 /*break*/, 6];
-                    return [4 /*yield*/, dumpDCBEntries()];
                 case 5:
                     _a.sent();
                     _a.label = 6;
                 case 6:
-                    if (!result.toLowerCase().startsWith("3")) return [3 /*break*/, 8];
-                    return [4 /*yield*/, drawNVCap()];
+                    if (!romExists) return [3 /*break*/, 10];
+                    if (!result.toLowerCase().startsWith("2")) return [3 /*break*/, 8];
+                    return [4 /*yield*/, dumpDCBEntries()];
                 case 7:
                     _a.sent();
                     _a.label = 8;
-                case 8: return [3 /*break*/, 1];
+                case 8:
+                    if (!result.toLowerCase().startsWith("3")) return [3 /*break*/, 10];
+                    return [4 /*yield*/, drawNVCap()];
                 case 9:
+                    _a.sent();
+                    _a.label = 10;
+                case 10: return [3 /*break*/, 3];
+                case 11:
                     showGoodbye();
                     return [2 /*return*/];
             }

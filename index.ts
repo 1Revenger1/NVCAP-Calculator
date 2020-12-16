@@ -2,8 +2,9 @@ import chalk from "chalk";
 import {existsSync, readFileSync} from "fs";
 
 // Based off of https://github.com/torvalds/linux/blob/master/drivers/gpu/drm/nouveau/nouveau_bios.c
-let romFile = "000.rom";
+let romFile = "9600MGT.rom";
 
+// Write question string, and then wait for a user response (ie when they press enter)
 async function prompt (question : string) : Promise<string> {
     let stdin = process.stdin;
     let stdout = process.stdout;
@@ -40,6 +41,7 @@ interface NVCAP {
     fieldF: number
 }
 
+// DCB connector type
 enum ConnectorType {
     CRT = 0,
     TV,
@@ -68,6 +70,7 @@ interface DCBEntry {
     merged: boolean,
 }
 
+// Parsed display type
 enum DisplayType {
     LVDS = 0,
     TV,
@@ -76,6 +79,8 @@ enum DisplayType {
     DVI
 }
 
+// A display is the parsed version of a DCB entry
+// A display can represent 1 or more DCB entries (ie DVI is generally 2 entries)
 interface Display {
     type: DisplayType,
     dcbEntries: number[],
@@ -195,11 +200,11 @@ function readRom() {
         if (dcbHead.type == ConnectorType.LVDS)
             nvcap.isMobile = true;
 
-        parsedEntries.push(dcbHead);
-
-        // EOL (End of Line) - start parsing entries
+        // EOL (End of Line) - stop parsing entries
         if (dcbHead.type == 0xE)
             break;
+
+        parsedEntries.push(dcbHead);
     }
 
     console.log();
@@ -266,14 +271,14 @@ function readRom() {
     let lvdsExists = false;
 
     // Help the user by doing some preliminary placement of displays.
-    // Important thing is that TV actually goes on TV and that LVDS gets it's own head!
+    // Important thing is that TV goes to the TV head and that LVDS gets it's own head!
     filteredEntries.forEach((display: Display, index: number) => {
         if (display.type == DisplayType.TV) {
             headTV.push(index);
             return;
         }
         
-        // If there is an LVDS display, shove everything else on the other head
+        // If there is an LVDS display, put any other displays
         if (lvdsExists) {
             if (display.headBitmask & 0x2) {
                 head1.push(index);
@@ -331,8 +336,8 @@ async function chooseROM() {
         console.log(chalk.cyan("Linooox/macOS: ") + " Drag and drop your VBIOS into this prompt\n");
         
         let res = await prompt("New ROM Location (q to go to the menu)");
-        console.log(res);
         res = res.replace(/[\n\r"]/g, "").trim();
+        console.log(`Parsed Path: ${res}`);
         if (res == "q") return;
         if (existsSync(res)) {
             romFile = res;
@@ -416,7 +421,9 @@ async function drawNVCap() {
         console.log();
 
         if (result.length == 0) continue;
+        // quit
         if (result.toLowerCase().startsWith("q")) return;
+        // Create NVCAP
         if (result.toLowerCase().startsWith("c")) {
             console.log();
             createNVCap();
@@ -427,6 +434,8 @@ async function drawNVCap() {
             continue;
         }
 
+        // Handle commands like "2 1" where display 2 gets put on head 1
+        // If the first letter is "n", then that is ignored here
         let splitArr = result.split(" ");
         if (splitArr.length == 2 && parseInt(splitArr[0]) && 
             (parseInt(splitArr[1]) || splitArr[1].toLowerCase().startsWith("tv"))) {
@@ -468,6 +477,7 @@ async function drawNVCap() {
             continue;
         }
 
+        // Handle other options with "n" in front
         splitArr[0] = splitArr[0].replace("n", "");
         if (parseInt(splitArr[0])) {
             let command = parseInt(splitArr[0]) - 1;
@@ -590,10 +600,12 @@ function showGoodbye() {
 }
 
 async function main() {
-    // Init ROM info if it exists
-    if (existsSync(romFile)) {
-        readRom();
+    // Ask user for path if rom does not exist
+    if (!existsSync(romFile)) {
+        await chooseROM();
     }
+    
+    readRom();
 
     while (true) {
         let romExists = existsSync(romFile);
@@ -615,7 +627,7 @@ async function main() {
         }
         console.log(output);
 
-        let result = await prompt("Type in the number to select your option, or \"q\"/\"quit\" to quit: ");
+        let result = await prompt("Type in the number to select your option, or \"q\"/\"quit\" to quit");
         if (result.toLowerCase().startsWith("q")) break;
         if (result.toLowerCase().startsWith("1")) await chooseROM();
         if (romExists) {
