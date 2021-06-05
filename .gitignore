@@ -1,3 +1,7 @@
 **/*.rom
 **/.DS_STORE
 node_modules/
+
+# Added by cargo
+
+/target
