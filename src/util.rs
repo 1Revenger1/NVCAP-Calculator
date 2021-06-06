@@ -35,14 +35,17 @@ pub fn read_uint_32_le(rom: &Vec<u8>, offset: usize) -> u32 {
 }
 
 pub fn press_any_key() {
+    let mut buf = String::new();
+    prompt("Press the enter key to continue...", &mut buf);
+}
+
+pub fn prompt(prompt: &str, input: &mut String) {
     let mut stdout = io::stdout();
     let stdin = io::stdin();
 
-    write!(stdout, "Press the enter key to continue...").unwrap();
+    write!(stdout, "{}", prompt).unwrap();
     stdout.flush().unwrap();
-
-    let mut buf = String::new();
-    stdin.read_line(&mut buf).unwrap();
+    stdin.read_line(input).unwrap();
 }
 
 pub fn clear_console() {

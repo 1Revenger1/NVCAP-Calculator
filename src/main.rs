@@ -5,36 +5,43 @@ use std::{io};
 use std::io::prelude::*;
 
 fn main() {
-    // let filename = "9600MGT.rom";
-    let dcb_entries: Option<Vec<nvidia::DcbEntry>>;
-    let display_entries: Option<Vec<util::Display>>;
-    let filename = "11NVIDIA.GTX480.1536.100414.rom";
-    let res = nvidia::read_rom(filename);
+    let dcb_entries_opt: Vec<nvidia::DcbEntry>;
+    let display_entries_opt: Vec<util::Display>;
+    let mut filename = "NVIDIA.GTX480.1536.100414.rom".to_owned();
 
+    let res = choose_rom();
     match res {
-        Err(_) => {
-            let tuple = choose_rom();
-            dcb_entries = tuple.0;
-            display_entries = tuple.1;
-        }
         Ok(tuple) => {
-            dcb_entries = Some(tuple.0);
-            display_entries = Some(tuple.1);
+            filename = tuple.0;
+            dcb_entries_opt = tuple.1;
+            display_entries_opt = tuple.2;
+        },
+        Err(_) => {
+            util::goodbye();
+            return;
         }
     }
-    
-    if dcb_entries.is_none() {
-        util::goodbye();
-        return;
-    }
 
-    util::header();
+    loop {
+        let mut input = String::new();
+        util::header();
 
-    dump_dcb_entries(&dcb_entries.unwrap());
-    println!("");
+        println!("{} Show DCB Entries", "(1)".cyan());
+        println!("{} Calculate NVCAP", "(2)".cyan());
+        println!("");
+        println!("Current ROM file: {}", filename.green());
 
-    for display in display_entries.unwrap() {
-        println!("Type: {:?} - Entries: {:?} - Head Bitmask {}", display.disp_type, display.dcb_entries, display.head_bitmask);
+        util::prompt("Type in the number to select your option, or \"q\"/\"quit\" to quit: ", &mut input);
+        input = input.trim_end().to_owned();
+        println!("{}", input);
+
+        if "1".eq(&input) {
+            dump_dcb_entries(&dcb_entries_opt);
+        } else if "2".eq(&input) {
+            continue;
+        } else if input.starts_with("q") {
+            break;
+        }
     }
     
     util::press_any_key();
@@ -42,7 +49,7 @@ fn main() {
     util::goodbye();
 }
 
-fn choose_rom () -> (Option<Vec<nvidia::DcbEntry>>, Option<Vec<util::Display>>) {
+fn choose_rom () -> Result<(String, Vec<nvidia::DcbEntry>, Vec<util::Display>), util::NVErrors> {
     let mut filename = String::new();
     loop {
         util::clear_console();
@@ -63,12 +70,12 @@ fn choose_rom () -> (Option<Vec<nvidia::DcbEntry>>, Option<Vec<util::Display>>) 
 
             Ok(_) => {
                 // Remove newline at end and quotes as those mess up finding the ROM
-                filename = filename.trim_end().replace("\"", "");
+                filename = filename.trim_end().replace("\"", "").to_owned();
             }
         }
 
         if filename.to_lowercase().starts_with("q") {
-            return (None, None);
+            return Err(util::NVErrors::FileNotFound);
         }
 
         let read_result = nvidia::read_rom(&filename);
@@ -79,13 +86,14 @@ fn choose_rom () -> (Option<Vec<nvidia::DcbEntry>>, Option<Vec<util::Display>>) 
             }
             Ok(res) => {
                 util::press_any_key();
-                return (Some(res.0), Some(res.1));
+                return Ok((filename, res.0, res.1));
             }
         }
     }
 }
 
 fn dump_dcb_entries(dcb_entries: &Vec<nvidia::DcbEntry>) {
+    util::header();
     for i in 0..dcb_entries.len() {
         let dcb_entry = &dcb_entries[i];
         println!("{} {:#x}", "DCB Entry".bright_blue(), i);
@@ -107,4 +115,13 @@ fn dump_dcb_entries(dcb_entries: &Vec<nvidia::DcbEntry>) {
     }
 
     util::press_any_key();
+}
+
+fn list_displays_and_nvcap(displays: &Vec<util::Display>) {
+    for i in 0..displays.len() {
+        let display = displays[i];
+    }
+    for display in displays {
+        println!("Type: {:?} - Entries: {:?} - Head Bitmask {}", display.disp_type, display.dcb_entries, display.head_bitmask);
+    }
 }
