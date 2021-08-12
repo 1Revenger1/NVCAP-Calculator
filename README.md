@@ -4,9 +4,7 @@ This is a simple script which reads an Nvidia GPU VBIOS and calculates an NVCAP 
 
 This is compatible with GTX 4xx series GPUs and older, and works with both laptop and desktop GPUs.
 
-To use this program, you need node.js. To run, you'll want to clone this project, run `npm install`, then `npm run run` OR `node index.js`. Building is not required, but this can be built using typescript. `tsc` will automatically generate `index.js`, but `npm run build` will compile and run in one command if preferred.
-
-Once running, give it a VBIOS file, and then select `3` once it dumps you to the main menu again. From there, you need to assign each Display (at the top) to a head.
+Once running, give it a VBIOS file, and then select `2` once it dumps you to the main menu again. From there, you need to assign each Display (at the top) to a head.
 
 When parsing the VBIOS, the script automatically merges DCB entries with the same type and bus index and presents them as a single Display. If the bus index is the same, but are differing types, this will be presented as a single DVI Display.
 

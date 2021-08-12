@@ -1,0 +1,45 @@
+name: Build and Release
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+  release:
+    types: [published]
+
+jobs:
+  release:
+    name: Build and Release
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-latest
+            artifact_name: nvcap_calculator
+            asset_name: nvcap_calculator_linux_amd64
+          - os: macos-latest
+            artifact_name: nvcap_calculator
+            asset_name: nvcap_calculator_macos_amd64
+          - os: windows-latest
+            artifact_name: nvcap_calculator.exe
+            asset_name: nvcap_calculator_windows_amd64
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+      - name: Build Project
+        run: cargo build --release --locked
+      - name: Upload binary to release
+        if: github.event_name == 'release'
+        uses: svenstaro/upload-release-action@v2
+        with:
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          file: target/release/${{ matrix.artifact_name }}
+          asset_name: ${{ matrix.asset_name }}
+          tag: ${{ github.ref }}
+      - name: Upload binary artifacts
+        uses: actions/upload-artifact@v2
+        with:
+          name: ${{ matrix.asset_name }}
+          path: target/release/${{ matrix.artifact_name }}
+
+        
