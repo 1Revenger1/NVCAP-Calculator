@@ -4,6 +4,7 @@ use std::io::prelude::*;
 use chrono::{Local, Timelike};
 
 #[derive(Debug)]
+#[derive(PartialEq)]
 pub enum DisplayType {
     LVDS,
     TV,
@@ -76,4 +77,24 @@ pub fn header() {
     println!("{}{}{}", "|".green(), "     NVCAP Calculator     ".cyan(), "|".green());
     println!("{}", "+--------------------------+".green());
     println!("");
+}
+
+pub fn is_mobile(displays: &Vec<Display>) -> bool {
+    for disp in displays {
+        if disp.disp_type == DisplayType::LVDS {
+            return true;
+        }
+    }
+
+    false
+}
+
+pub fn has_tv(displays: &Vec<Display>) -> bool {
+    for disp in displays {
+        if disp.disp_type == DisplayType::TV {
+            return true;
+        }
+    }
+
+    false
 }

@@ -1,6 +1,6 @@
 
 use colored::*;
-use std::fs;
+use std::{fs, mem};
 use crate::util::{self, NVErrors};
 
 // DCB numbers
@@ -49,6 +49,41 @@ pub fn dcb_type_to_string(dcb_type: u32) -> &'static str {
         DCB_CONN_DP => "DisplayPort",
         _ => "Unknown",
     }
+}
+
+
+// https://github.com/acidanthera/WhateverGreen/blob/master/Manual/NVCAP.bt#L9
+// Starting from 8000 series
+pub const NVCAP_VERSION_MODERN: u8 = 5;
+pub const HEAD_0_BITMASK: u32 = 0x1;
+pub const HEAD_1_BITMASK: u32 = 0x2;
+
+#[repr(C)]
+pub struct NVCAP {
+    pub version: u8,
+    pub is_mobile: bool,
+    pub is_composite: bool,
+    pub unknown_1: u8,
+    
+    pub dcb_tv_mask: u16,
+    pub dcb_0_mask: u16,
+    pub dcb_1_mask: u16,
+    // Only for GK107 and newer (which this script doesn't support)
+    pub dcb_2_mask: u16,
+    pub dcb_3_mask: u16,
+
+    pub script_based_power_and_backlight: bool,
+    /*
+      07: Clover's default
+      0A: Desktop-class GPU (Chameleon default)
+      0B: Laptop-class GPU
+      0E: 300 series+ MacBook Air/Low end
+      0F: 300 series+ MacBook Pro/iMac/High End
+    */
+    pub field_f: u8,
+    // Unknown field - 10 bit/EDID Manufacturer reserved timings support?
+    pub edid_bitness: u8,
+    pub unknown_2: [u8; 3],
 }
 
 pub fn parse_signature(version: u8, rom: &Vec<u8>, offset: usize) -> bool {
@@ -130,7 +165,8 @@ fn merge_dcb_entries(parsed_dcb_entries: &mut Vec<DcbEntry>, filtered_pub_entrie
 
         // https://nvidia.github.io/open-gpu-doc/DCB/DCB-4.x-Specification.html#_dcb_device_entries
         // Use Bus id, not connector index, to merge devices together
-        let dcb_entry_2 = parsed_dcb_entries.iter().find(|x| (x.bus == dcb_entry.bus) && (x.entry != dcb_entry.entry));
+        let dcb_entry_2 = parsed_dcb_entries.iter().find(
+            |x| (x.bus == dcb_entry.bus) && (x.entry != dcb_entry.entry));
 
         match dcb_entry_2 {
             Some(x) => {
@@ -160,6 +196,19 @@ fn merge_dcb_entries(parsed_dcb_entries: &mut Vec<DcbEntry>, filtered_pub_entrie
             }
         }
     }
+}
+
+// Convert indexes of displays to DCB head mask
+fn create_head_mask(display_indexes: &Vec<usize>, displays: &Vec<util::Display>) -> u16 {
+    let mut mask: u16 = 0;
+    for &idx in display_indexes {
+        let dcb_entries = &displays[idx].dcb_entries;
+        for dcb_entry in dcb_entries {
+            mask |= 1 << dcb_entry;
+        }
+    }
+
+    mask
 }
 
 pub fn read_rom(filename: &str) -> Result<(Vec<DcbEntry>, Vec<util::Display>), NVErrors> {
@@ -199,4 +248,29 @@ pub fn read_rom(filename: &str) -> Result<(Vec<DcbEntry>, Vec<util::Display>), N
     parse_dcb_entries(&rom, dcb_header_offset, dcb_size, &mut parsed_dcb_entries);
     merge_dcb_entries(&mut parsed_dcb_entries, &mut filtered_disp_entries);
     Ok((parsed_dcb_entries, filtered_disp_entries))
+}
+
+pub fn create_nvcap_value (nvcap: &mut NVCAP, displays: &Vec<util::Display>,
+                           head_tv: &Vec<usize>, head_0: &Vec<usize>, head_1: &Vec<usize>) {
+    nvcap.dcb_tv_mask = create_head_mask(head_tv, displays);
+    nvcap.dcb_0_mask = create_head_mask(head_0, displays);
+    nvcap.dcb_1_mask = create_head_mask(head_1, displays);
+
+    util::header();
+
+    println!("TV mask: {:#x}", nvcap.dcb_tv_mask);
+    println!("Head 0 mask: {:#x}", nvcap.dcb_0_mask);
+    println!("Head 1 mask: {:#x}", nvcap.dcb_1_mask);
+
+    println!("{}: ", "NVCAP".cyan());
+
+    let view = nvcap as *const _ as *const u32;
+    let max_bound = mem::size_of::<NVCAP>() / 4;
+    for i in 0..max_bound as isize {
+        let val: u32 = unsafe { *view.offset(i) };
+        print!("{:08x} ", val.to_be());
+    }
+
+    println!("\n");
+    util::press_any_key();
 }
